@@ -1,23 +1,32 @@
 import { CreateUser, User } from '@app/shared';
-import { randomUUID } from 'node:crypto';
-
-// In a real app, this would use Drizzle ORM to interact with Postgres.
-// For now, we'll use an in-memory mock.
-const users: User[] = [];
+import { db } from '../db/index.js';
+import { users } from '../db/schema.js';
 
 export const userService = {
   async createUser(data: CreateUser): Promise<User> {
-    const newUser: User = {
-      ...data,
-      id: randomUUID(),
-      createdAt: new Date(),
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: data.email,
+        name: data.name,
+      })
+      .returning();
+
+    return {
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      createdAt: newUser.createdAt,
     };
-    users.push(newUser);
-    return newUser;
   },
 
   async listUsers(): Promise<User[]> {
-    return users;
-  }
+    const result = await db.select().from(users);
+    return result.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      createdAt: row.createdAt,
+    }));
+  },
 };
-

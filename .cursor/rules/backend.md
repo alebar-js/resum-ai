@@ -1,3 +1,14 @@
+---
+description: Standards for Node.js, Fastify, and Drizzle logic within the api package
+globs: ["packages/api/**/*", "packages/shared/**/*"]
+---
+# Backend Development Standards...
+
+## Monorepo Conventions
+- Always use pnpm: `pnpm add <pkg> --filter api`.
+- Database: Use `pnpm --filter api run db:generate` and `pnpm --filter api run db:migrate`.
+- Shared Logic: Import Zod schemas from `@app/shared`. DO NOT redefine schemas locally in the API.
+
 # Backend Development Standards (Fastify + Drizzle + Zod)
 
 You are an expert in TypeScript, Node.js, Fastify, Drizzle ORM, PostgreSQL, and Zod. You prioritize type safety, high performance, and modular architecture.

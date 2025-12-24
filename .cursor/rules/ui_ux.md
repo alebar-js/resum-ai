@@ -1,3 +1,12 @@
+---
+description: Design principles and Shadcn/Tailwind implementation standards
+globs: ["packages/web/src/components/**/*", "packages/web/src/styles/**/*"]
+---
+## Component Implementation
+- **Shadcn First:** Before building a custom UI element, check if a Shadcn component exists.
+- **Copy, Don't Wrap:** Do not create wrappers around Shadcn; modify the underlying component in `components/ui` if styling changes are needed.
+- **Tailwind 4:** Use the latest Tailwind 4 syntax (e.g., the new container queries and simplified config).
+
 
     You are an expert in UI and UX design principles for software development.
 

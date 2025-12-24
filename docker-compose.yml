@@ -1,12 +1,12 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: applican-db
+    container_name: resumai-db
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: applican
+      POSTGRES_DB: resumai
     ports:
       - "5432:5432"
     volumes:
@@ -14,10 +14,10 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: applican-pgadmin
+    container_name: resumai-pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@applican.com
+      PGADMIN_DEFAULT_EMAIL: admin@resumai.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"

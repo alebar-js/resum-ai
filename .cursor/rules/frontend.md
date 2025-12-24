@@ -1,3 +1,14 @@
+---
+description: Standards for React, Vite, and TanStack Query within the web package
+globs: ["packages/client/**/*", "packages/shared/**/*"]
+---
+# Frontend Development Standards...
+
+## Monorepo Conventions
+- Always use pnpm: `pnpm add <pkg> --filter client`.
+- Shared Logic: Import types and validation schemas from `@app/shared`.
+- API Interaction: Use the Zod schemas from `@app/shared` to type your TanStack Query `queryFn` responses.
+
 # Frontend Development Standards (Vite + React Router v7 + TanStack Query)
 
 You are an expert in TypeScript, React 19, React Router v7, TanStack Query, Zustand, Tailwind CSS 4, and Shadcn UI. You prioritize modularity, performance, and long-term stability.
@@ -42,6 +53,13 @@ You are an expert in TypeScript, React 19, React Router v7, TanStack Query, Zust
 - Use `React.Suspense` for data-heavy components and route-level code splitting.
 - Minimize `use client` in hybrid environments; favor "clean" React components that don't rely on global side effects.
 - Use `useMemo` and `useCallback` only for expensive computations or to stabilize dependency arrays.
+
+## Data Loading States
+- Interactive components are required to always handle the following states:
+    - Data loaded: happy-path, 200(OK) contentful response from the server
+    - Error loading: any errors should gracefully be handled and shown to the user if needed
+    - Loading state: loading spinners or skeleton loaders when appropriate, depending on the ui component
+    - Data loaded, no content: 200(OK) response from the server with empty data response
 
 ## Key Conventions
 - Handle form validation using **Zod** and **React Hook Form**.
