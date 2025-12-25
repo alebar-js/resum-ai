@@ -1,12 +1,21 @@
 import { create } from "zustand";
+import type { ResumeProfile } from "@app/shared";
 
-type ViewMode = "master" | "fork";
+type ViewMode = "master" | "jobPosting";
 
 interface DiffState {
   original: string;
   refactored: string;
   resolved: string;
   isReviewing: boolean;
+}
+
+interface DiffDataState {
+  original: ResumeProfile | null;
+  refactored: ResumeProfile | null;
+  resolved: ResumeProfile | null;
+  isReviewing: boolean;
+  acceptedChanges: Record<string, boolean>; // Map of change paths to acceptance status (true = accepted, false = rejected, undefined = pending)
 }
 
 interface AppState {
@@ -16,10 +25,13 @@ interface AppState {
   
   // View mode
   viewMode: ViewMode;
-  activeForkId: string | null;
+  activeJobPostingId: string | null;
   
-  // Diff state
+  // Diff state (legacy - Markdown)
   diff: DiffState;
+  
+  // Diff data state (new - JSON)
+  diffData: DiffDataState;
   
   // JD Input
   jobDescription: string;
@@ -29,15 +41,25 @@ interface AppState {
   setSidebarOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   setViewMode: (mode: ViewMode) => void;
-  setActiveForkId: (id: string | null) => void;
+  setActiveJobPostingId: (id: string | null) => void;
   setJobDescription: (jd: string) => void;
   
-  // Diff actions
+  // Diff actions (legacy - Markdown)
   startDiffReview: (original: string, refactored: string) => void;
   keepChanges: () => void;
   undoChanges: () => void;
   clearDiff: () => void;
   updateResolved: (content: string) => void;
+  
+  // Diff data actions (new - JSON)
+  startDiffReviewData: (original: ResumeProfile, refactored: ResumeProfile) => void;
+  keepChangesData: () => void;
+  undoChangesData: () => void;
+  clearDiffData: () => void;
+  updateResolvedData: (data: ResumeProfile) => void;
+  acceptChange: (changePath: string) => void;
+  rejectChange: (changePath: string) => void;
+  resetChangeDecision: (changePath: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -45,13 +67,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSidebarOpen: true,
   searchQuery: "",
   viewMode: "master",
-  activeForkId: null,
+  activeJobPostingId: null,
   jobDescription: "",
   diff: {
     original: "",
     refactored: "",
     resolved: "",
     isReviewing: false,
+  },
+  diffData: {
+    original: null,
+    refactored: null,
+    resolved: null,
+    isReviewing: false,
+    acceptedChanges: {},
   },
   
   // Sidebar actions
@@ -61,7 +90,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   // View mode actions
   setViewMode: (mode) => set({ viewMode: mode }),
-  setActiveForkId: (id) => set({ activeForkId: id, viewMode: id ? "fork" : "master" }),
+  setActiveJobPostingId: (id) => set({ activeJobPostingId: id, viewMode: id ? "jobPosting" : "master" }),
   
   // JD actions
   setJobDescription: (jd) => set({ jobDescription: jd }),
@@ -112,4 +141,83 @@ export const useAppStore = create<AppState>((set, get) => ({
       resolved: content,
     },
   })),
+  
+  // Diff data actions (new - JSON)
+  startDiffReviewData: (original, refactored) => set({
+    diffData: {
+      original,
+      refactored,
+      resolved: refactored,
+      isReviewing: true,
+      acceptedChanges: {},
+    },
+  }),
+  
+  keepChangesData: () => {
+    const { diffData } = get();
+    set({
+      diffData: {
+        ...diffData,
+        isReviewing: false,
+      },
+    });
+  },
+  
+  undoChangesData: () => {
+    const { diffData } = get();
+    set({
+      diffData: {
+        ...diffData,
+        resolved: diffData.original,
+        isReviewing: false,
+      },
+    });
+  },
+  
+  clearDiffData: () => set({
+    diffData: {
+      original: null,
+      refactored: null,
+      resolved: null,
+      isReviewing: false,
+      acceptedChanges: {},
+    },
+  }),
+  
+  updateResolvedData: (data) => set((state) => ({
+    diffData: {
+      ...state.diffData,
+      resolved: data,
+    },
+  })),
+  
+  acceptChange: (changePath) => set((state) => ({
+    diffData: {
+      ...state.diffData,
+      acceptedChanges: {
+        ...state.diffData.acceptedChanges,
+        [changePath]: true,
+      },
+    },
+  })),
+  
+  rejectChange: (changePath) => set((state) => ({
+    diffData: {
+      ...state.diffData,
+      acceptedChanges: {
+        ...state.diffData.acceptedChanges,
+        [changePath]: false,
+      },
+    },
+  })),
+  
+  resetChangeDecision: (changePath) => set((state) => {
+    const { [changePath]: _, ...rest } = state.diffData.acceptedChanges;
+    return {
+      diffData: {
+        ...state.diffData,
+        acceptedChanges: rest,
+      },
+    };
+  }),
 }));

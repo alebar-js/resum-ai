@@ -22,7 +22,8 @@
     "allowImportingTsExtensions": true,
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["./app/*"],
+      "@app/shared": ["../shared/src/index.ts"]
     }
   }
 }

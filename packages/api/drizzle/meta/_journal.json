@@ -8,6 +8,27 @@
       "when": 1766532119457,
       "tag": "0000_fast_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766554692738,
+      "tag": "0001_fine_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766557394669,
+      "tag": "0002_redundant_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766622203592,
+      "tag": "0003_add_posting_url",
+      "breakpoints": true
     }
   ]
 }

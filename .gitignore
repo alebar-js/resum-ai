@@ -1,17 +1,19 @@
 # Dependencies
-node_modules/
+**/node_modules/*
 .pnpm-store/
+/node_modules/*
 
 # Build outputs
-dist/
+**/dist/
 build/
-.react-router/
+**/react-router/
 
 # Turborepo
+**/turbo/
 .turbo/
 
 # Environment variables
-.env
+**/.env
 .env.local
 .env.*.local
 
@@ -22,6 +24,7 @@ build/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+.cursor/*
 
 # OS
 .DS_Store

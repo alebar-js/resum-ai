@@ -1,82 +1,85 @@
 import { useEffect, useCallback, useState } from "react";
+import { useNavigate } from "react-router";
 import { Check, RotateCcw, RefreshCw, Save } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { useAppStore } from "~/lib/store";
-import { useRefactor, useCreateFork, useUpdateFork } from "~/lib/queries";
+import { useRefactorData, useCreateJobPostingData, useUpdateJobPostingData } from "~/lib/queries";
 
 export function FloatingActionBar() {
+  const navigate = useNavigate();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [forkTitle, setForkTitle] = useState("");
   
-  const diff = useAppStore((state) => state.diff);
-  const keepChanges = useAppStore((state) => state.keepChanges);
-  const undoChanges = useAppStore((state) => state.undoChanges);
+  const diffData = useAppStore((state) => state.diffData);
+  const keepChangesData = useAppStore((state) => state.keepChangesData);
+  const undoChangesData = useAppStore((state) => state.undoChangesData);
   const jobDescription = useAppStore((state) => state.jobDescription);
-  const startDiffReview = useAppStore((state) => state.startDiffReview);
-  const activeForkId = useAppStore((state) => state.activeForkId);
-  const setActiveForkId = useAppStore((state) => state.setActiveForkId);
-  
-  const refactorMutation = useRefactor();
-  const createForkMutation = useCreateFork();
-  const updateForkMutation = useUpdateFork();
+  const startDiffReviewData = useAppStore((state) => state.startDiffReviewData);
+  const activeJobPostingId = useAppStore((state) => state.activeJobPostingId);
+
+  const refactorMutation = useRefactorData();
+  const createJobPostingMutation = useCreateJobPostingData();
+  const updateJobPostingMutation = useUpdateJobPostingData();
 
   const handleKeep = useCallback(() => {
-    // If we have an active fork, update it directly
-    if (activeForkId) {
-      updateForkMutation.mutate({
-        id: activeForkId,
+    if (!diffData.resolved) return;
+    
+    // If we have an active job posting, update it directly
+    if (activeJobPostingId) {
+      updateJobPostingMutation.mutate({
+        id: activeJobPostingId,
         data: {
-          content: diff.refactored,
-          status: "MERGED",
+          data: diffData.resolved,
+          status: "READY",
         },
       });
-      keepChanges();
+      keepChangesData();
     } else {
-      // Show save dialog to create a new fork
+      // Show save dialog to create a new job posting
       setShowSaveDialog(true);
     }
-  }, [activeForkId, diff.refactored, keepChanges, updateForkMutation]);
+  }, [activeJobPostingId, diffData.resolved, keepChangesData, updateJobPostingMutation]);
 
   const handleSaveFork = useCallback(async () => {
-    if (!forkTitle.trim()) return;
+    if (!forkTitle.trim() || !diffData.resolved) return;
 
     try {
-      const newFork = await createForkMutation.mutateAsync({
+      const newJobPosting = await createJobPostingMutation.mutateAsync({
         title: forkTitle,
         jobDescription: jobDescription,
-        content: diff.refactored,
+        data: diffData.resolved,
       });
       
-      setActiveForkId(newFork.id);
-      keepChanges();
+      navigate(`/job-posting/${newJobPosting.id}`);
+      keepChangesData();
       setShowSaveDialog(false);
       setForkTitle("");
     } catch (error) {
       console.error("Failed to save job posting:", error);
     }
-  }, [forkTitle, jobDescription, diff.refactored, createForkMutation, setActiveForkId, keepChanges]);
+  }, [forkTitle, jobDescription, diffData.resolved, createJobPostingMutation, navigate, keepChangesData]);
 
   const handleUndo = useCallback(() => {
-    undoChanges();
+    undoChangesData();
     setShowSaveDialog(false);
     setForkTitle("");
-  }, [undoChanges]);
+  }, [undoChangesData]);
 
   const handleRegenerate = useCallback(async () => {
     if (!jobDescription.trim()) return;
     
     try {
       const result = await refactorMutation.mutateAsync({ jobDescription });
-      startDiffReview(result.original, result.refactored);
+      startDiffReviewData(result.original, result.refactored);
     } catch (error) {
       console.error("Regenerate failed:", error);
     }
-  }, [jobDescription, refactorMutation, startDiffReview]);
+  }, [jobDescription, refactorMutation, startDiffReviewData]);
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!diff.isReviewing) return;
+    if (!diffData.isReviewing) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in input
@@ -96,9 +99,9 @@ export function FloatingActionBar() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [diff.isReviewing, handleKeep, handleUndo]);
+  }, [diffData.isReviewing, handleKeep, handleUndo]);
 
-  if (!diff.isReviewing) return null;
+  if (!diffData.isReviewing) return null;
 
   // Show save dialog
   if (showSaveDialog) {
@@ -123,10 +126,10 @@ export function FloatingActionBar() {
             />
             <Button
               onClick={handleSaveFork}
-              disabled={!forkTitle.trim() || createForkMutation.isPending}
+              disabled={!forkTitle.trim() || createJobPostingMutation.isPending}
               className="gap-2"
             >
-              {createForkMutation.isPending ? (
+              {createJobPostingMutation.isPending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                   Saving...
@@ -142,13 +145,13 @@ export function FloatingActionBar() {
               Cancel
             </Button>
           </div>
-          {/* Error state for create fork mutation */}
-          {createForkMutation.isError && (
+          {/* Error state for create job posting mutation */}
+          {createJobPostingMutation.isError && (
             <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <p className="text-sm text-destructive font-medium mb-1">Failed to save job posting</p>
               <p className="text-xs text-destructive/80">
-                {createForkMutation.error instanceof Error
-                  ? createForkMutation.error.message
+                {createJobPostingMutation.error instanceof Error
+                  ? createJobPostingMutation.error.message
                   : "An unexpected error occurred. Please try again."}
               </p>
             </div>
@@ -189,10 +192,10 @@ export function FloatingActionBar() {
           
           <Button 
             onClick={handleKeep} 
-            disabled={updateForkMutation.isPending}
+            disabled={updateJobPostingMutation.isPending}
             className="gap-2"
           >
-            {updateForkMutation.isPending ? (
+            {updateJobPostingMutation.isPending ? (
               <>
                 <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                 Saving...
@@ -208,14 +211,14 @@ export function FloatingActionBar() {
         </div>
         
         {/* Error states for mutations */}
-        {(refactorMutation.isError || updateForkMutation.isError) && (
+        {(refactorMutation.isError || updateJobPostingMutation.isError) && (
           <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
             <p className="text-sm text-destructive font-medium mb-1">
               {refactorMutation.isError ? "Failed to regenerate" : "Failed to save changes"}
             </p>
             <p className="text-xs text-destructive/80">
-              {(refactorMutation.error || updateForkMutation.error) instanceof Error
-                ? (refactorMutation.error || updateForkMutation.error)?.message
+              {(refactorMutation.error || updateJobPostingMutation.error) instanceof Error
+                ? (refactorMutation.error || updateJobPostingMutation.error)?.message
                 : "An unexpected error occurred. Please try again."}
             </p>
           </div>

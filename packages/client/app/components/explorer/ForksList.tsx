@@ -1,32 +1,63 @@
-import { GitFork, Loader2 } from "lucide-react";
+import { FolderKanban, Loader2, Plus } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { cn } from "~/lib/utils";
 import { useAppStore } from "~/lib/store";
-import { useForks } from "~/lib/queries";
-import type { ForkStatus } from "~/lib/api";
+import { useJobPostings } from "~/lib/queries";
+import type { JobPosting, JobPostingStatus } from "~/lib/api";
 
-function getStatusVariant(status: ForkStatus) {
+interface JobPostingsListProps {
+  onCreateClick?: () => void;
+}
+
+function getStatusVariant(status: JobPostingStatus) {
   switch (status) {
-    case "DRAFT":
-      return "draft";
-    case "MERGED":
-      return "merged";
+    case "IN_PROGRESS":
+      return "in-progress";
+    case "READY":
+      return "ready";
     case "EXPORTED":
       return "exported";
+    case "APPLIED":
+      return "applied";
+    case "OFFER":
+      return "offer";
+    case "REJECTED":
+      return "rejected";
     default:
       return "secondary";
   }
 }
 
-export function ForksList() {
-  const { data: forks, isLoading, error } = useForks();
-  const searchQuery = useAppStore((state) => state.searchQuery);
-  const activeForkId = useAppStore((state) => state.activeForkId);
-  const setActiveForkId = useAppStore((state) => state.setActiveForkId);
+function getStatusLabel(status: JobPostingStatus) {
+  switch (status) {
+    case "IN_PROGRESS":
+      return "In Progress";
+    case "READY":
+      return "Ready";
+    case "EXPORTED":
+      return "Exported";
+    case "APPLIED":
+      return "Applied";
+    case "OFFER":
+      return "Offer";
+    case "REJECTED":
+      return "Rejected";
+    default:
+      return status;
+  }
+}
 
-  const filteredForks = forks?.filter((fork) =>
-    fork.title.toLowerCase().includes(searchQuery.toLowerCase())
+export function JobPostingsList({ onCreateClick }: JobPostingsListProps) {
+  const navigate = useNavigate();
+  const { data: jobPostings, isLoading, error } = useJobPostings();
+  const searchQuery = useAppStore((state) => state.searchQuery);
+  const activeJobPostingId = useAppStore((state) => state.activeJobPostingId);
+
+  const filteredJobPostings = jobPostings?.filter((jobPosting) =>
+    jobPosting.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isLoading) {
@@ -51,10 +82,26 @@ export function ForksList() {
     );
   }
 
-  if (!filteredForks || filteredForks.length === 0) {
+  if (!filteredJobPostings || filteredJobPostings.length === 0) {
     return (
-      <div className="px-3 py-2 text-sm text-muted-foreground">
-        {searchQuery ? "No matching job postings" : "No job postings yet"}
+      <div className="px-3 py-2">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <FolderKanban className="w-8 h-8 text-muted-foreground mb-3 opacity-50" />
+          <p className="text-sm text-muted-foreground mb-1">
+            {searchQuery ? "No matching job postings" : "No job postings yet"}
+          </p>
+          {!searchQuery && onCreateClick && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onCreateClick}
+              className="mt-3 gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create Job Posting
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -62,23 +109,23 @@ export function ForksList() {
   return (
     <ScrollArea className="flex-1">
       <div className="space-y-1">
-        {filteredForks.map((fork) => (
+        {filteredJobPostings.map((jobPosting: JobPosting) => (
           <button
-            key={fork.id}
-            onClick={() => setActiveForkId(fork.id)}
+            key={jobPosting.id}
+            onClick={() => navigate(`/job-posting/${jobPosting.id}`)}
             className={cn(
               "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left transition-colors",
-              activeForkId === fork.id
+              activeJobPostingId === jobPosting.id
                 ? "bg-accent text-accent-foreground"
                 : "text-foreground hover:bg-accent/30"
             )}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <GitFork className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm truncate">{fork.title}</span>
+              <FolderKanban className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm truncate">{jobPosting.title}</span>
             </div>
-            <Badge variant={getStatusVariant(fork.status)} className="flex-shrink-0 text-xs">
-              {fork.status}
+            <Badge variant={getStatusVariant(jobPosting.status)} className="flex-shrink-0 text-xs">
+              {getStatusLabel(jobPosting.status)}
             </Badge>
           </button>
         ))}

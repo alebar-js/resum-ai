@@ -1,107 +1,98 @@
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { Copy, Download, Eye, Check } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { MarkdownPreview } from "./MarkdownPreview";
+import { ResumeRenderer } from "./ResumeRenderer";
 import { useAppStore } from "~/lib/store";
-import { useMasterResume, useFork, useUpdateFork } from "~/lib/queries";
+import { useMasterResumeData, useJobPostingData, useUpdateJobPosting } from "~/lib/queries";
 
 export function Preview() {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   
-  const diff = useAppStore((state) => state.diff);
+  const diffData = useAppStore((state) => state.diffData);
   const viewMode = useAppStore((state) => state.viewMode);
-  const activeForkId = useAppStore((state) => state.activeForkId);
-  
-  const { data: masterResume, isLoading: masterLoading, error: masterError } = useMasterResume();
-  const { data: activeFork, isLoading: forkLoading, error: forkError } = useFork(activeForkId ?? "");
-  const updateFork = useUpdateFork();
+  const activeJobPostingId = useAppStore((state) => state.activeJobPostingId);
 
-  const isLoading = masterLoading || (activeForkId && forkLoading);
-  const error = masterError || (activeForkId && forkError);
+  const { data: masterResumeData, isLoading: masterLoading } = useMasterResumeData();
+  const { data: activeJobPostingData, isLoading: jobPostingLoading } = useJobPostingData(activeJobPostingId);
+  const updateJobPosting = useUpdateJobPosting();
 
-  // Determine what content to show
-  let content = "";
+  const isLoading = masterLoading || (activeJobPostingId && jobPostingLoading);
+
+  // Determine what resume data to show (JSON only now)
+  let resumeData = null;
   let title = "resume";
 
-  if (diff.isReviewing) {
-    content = diff.refactored;
+  if (diffData.isReviewing && diffData.resolved) {
+    resumeData = diffData.resolved;
     title = "tailored-resume";
-  } else if (viewMode === "fork" && activeFork) {
-    content = activeFork.content;
-    title = activeFork.title.toLowerCase().replace(/\s+/g, "-");
+  } else if (viewMode === "jobPosting") {
+    if (activeJobPostingData?.data) {
+      resumeData = activeJobPostingData.data;
+      title = activeJobPostingData.title.toLowerCase().replace(/\s+/g, "-");
+    }
   } else {
-    content = masterResume?.content || "";
+    if (masterResumeData?.data) {
+      resumeData = masterResumeData.data;
     title = "main-resume";
+    }
   }
 
-  // Sync scroll with editor
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const syncScroll = () => {
-      const scrollPercentage = (window as any).__editorScrollPercentage;
-      if (scrollPercentage !== undefined && scrollRef.current) {
-        const maxScroll =
-          scrollRef.current.scrollHeight - scrollRef.current.clientHeight;
-        scrollRef.current.scrollTop = maxScroll * scrollPercentage;
-      }
-    };
-
-    // Poll for scroll updates (simple approach)
-    const interval = setInterval(syncScroll, 100);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleCopy = useCallback(async () => {
-    if (!content) return;
+    if (!resumeData) return;
+    
+    const textToCopy = JSON.stringify(resumeData, null, 2);
     
     try {
-      await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
     }
-  }, [content]);
+  }, [resumeData]);
 
   const handleDownload = useCallback(() => {
-    if (!content) return;
+    if (!resumeData) return;
     
-    const blob = new Blob([content], { type: "text/markdown" });
+    const textToDownload = JSON.stringify(resumeData, null, 2);
+    
+    const blob = new Blob([textToDownload], { 
+      type: "application/json"
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${title}.md`;
+    a.download = `${title}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    // Mark fork as exported if viewing a fork
-    if (viewMode === "fork" && activeForkId && activeFork?.status !== "EXPORTED") {
-      updateFork.mutate({
-        id: activeForkId,
+    // Mark job posting as exported if viewing a job posting
+    if (viewMode === "jobPosting" && activeJobPostingId && activeJobPostingData?.status !== "EXPORTED") {
+      updateJobPosting.mutate({
+        id: activeJobPostingId,
         data: { status: "EXPORTED" },
       });
     }
-  }, [content, title, viewMode, activeForkId, activeFork?.status, updateFork]);
+  }, [resumeData, title, viewMode, activeJobPostingId, activeJobPostingData?.status, updateJobPosting]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-card">
       {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
+      <div className="p-3 border-b border-border flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Eye className="w-4 h-4" />
           Preview
-          {diff.isReviewing && (
+          {diffData.isReviewing && (
             <span className="text-xs text-primary bg-primary/20 px-2 py-0.5 rounded-full">
               Adapted
             </span>
           )}
-          {viewMode === "fork" && activeFork && !diff.isReviewing && (
+          {viewMode === "jobPosting" && activeJobPostingData && !diffData.isReviewing && (
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full truncate max-w-32">
-              {activeFork.title}
+              {activeJobPostingData.title}
             </span>
           )}
         </div>
@@ -110,8 +101,8 @@ export function Preview() {
             variant="ghost"
             size="icon"
             onClick={handleCopy}
-            disabled={!content}
-            title="Copy to clipboard"
+            disabled={!resumeData}
+            title="Copy JSON to clipboard"
           >
             {copied ? (
               <Check className="w-4 h-4 text-emerald-400" />
@@ -123,19 +114,16 @@ export function Preview() {
             variant="ghost"
             size="icon"
             onClick={handleDownload}
-            disabled={!content}
-            title="Download as .md"
+            disabled={!resumeData}
+            title="Download as JSON"
           >
             <Download className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Markdown Preview */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-auto p-4"
-      >
+      {/* Resume Preview */}
+      <div className="flex-1 overflow-auto p-4">
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
@@ -146,27 +134,19 @@ export function Preview() {
           </div>
         )}
 
-        {/* Error state */}
-        {!isLoading && error && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-destructive font-medium mb-2">Failed to load preview</p>
-            <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : "An unexpected error occurred"}
-            </p>
-          </div>
-        )}
-
         {/* Data loaded - empty content */}
-        {!isLoading && !error && !content && (
+        {!isLoading && !resumeData && (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground text-center">
-              Preview will appear here once you have content.
+              Preview will appear here once you have resume data.
             </p>
           </div>
         )}
 
-        {/* Data loaded - with content */}
-        {!isLoading && !error && content && <MarkdownPreview content={content} />}
+        {/* Data loaded - with JSON data */}
+        {!isLoading && resumeData && (
+          <ResumeRenderer data={resumeData} />
+        )}
       </div>
     </div>
   );

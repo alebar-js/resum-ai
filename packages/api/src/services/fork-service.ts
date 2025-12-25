@@ -1,14 +1,14 @@
-import { JobFork, CreateJobFork, UpdateJobFork } from '@app/shared';
+import { JobPosting, CreateJobPosting, UpdateJobPosting } from '@app/shared';
 import { db } from '../db/index.js';
-import { jobForks } from '../db/schema.js';
+import { jobPostings } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 
-export const forkService = {
-  async getForks(): Promise<JobFork[]> {
+export const jobPostingService = {
+  async getJobPostings(): Promise<JobPosting[]> {
     const results = await db
       .select()
-      .from(jobForks)
-      .orderBy(desc(jobForks.updatedAt));
+      .from(jobPostings)
+      .orderBy(desc(jobPostings.updatedAt));
 
     return results.map((row) => ({
       id: row.id,
@@ -21,34 +21,34 @@ export const forkService = {
     }));
   },
 
-  async getForkById(id: string): Promise<JobFork | null> {
-    const [fork] = await db
+  async getJobPostingById(id: string): Promise<JobPosting | null> {
+    const [jobPosting] = await db
       .select()
-      .from(jobForks)
-      .where(eq(jobForks.id, id))
+      .from(jobPostings)
+      .where(eq(jobPostings.id, id))
       .limit(1);
 
-    if (!fork) return null;
+    if (!jobPosting) return null;
 
     return {
-      id: fork.id,
-      title: fork.title,
-      jobDescription: fork.jobDescription,
-      content: fork.content,
-      status: fork.status,
-      createdAt: fork.createdAt,
-      updatedAt: fork.updatedAt,
+      id: jobPosting.id,
+      title: jobPosting.title,
+      jobDescription: jobPosting.jobDescription,
+      content: jobPosting.content,
+      status: jobPosting.status,
+      createdAt: jobPosting.createdAt,
+      updatedAt: jobPosting.updatedAt,
     };
   },
 
-  async createFork(data: CreateJobFork): Promise<JobFork> {
+  async createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
     const [created] = await db
-      .insert(jobForks)
+      .insert(jobPostings)
       .values({
         title: data.title,
         jobDescription: data.jobDescription,
         content: data.content,
-        status: 'DRAFT',
+        status: 'IN_PROGRESS',
       })
       .returning();
 
@@ -63,19 +63,19 @@ export const forkService = {
     };
   },
 
-  async updateFork(id: string, data: UpdateJobFork): Promise<JobFork | null> {
-    const existing = await this.getForkById(id);
+  async updateJobPosting(id: string, data: UpdateJobPosting): Promise<JobPosting | null> {
+    const existing = await this.getJobPostingById(id);
     if (!existing) return null;
 
     const [updated] = await db
-      .update(jobForks)
+      .update(jobPostings)
       .set({
         ...(data.title && { title: data.title }),
         ...(data.content && { content: data.content }),
         ...(data.status && { status: data.status }),
         updatedAt: new Date(),
       })
-      .where(eq(jobForks.id, id))
+      .where(eq(jobPostings.id, id))
       .returning();
 
     return {
@@ -89,11 +89,11 @@ export const forkService = {
     };
   },
 
-  async deleteFork(id: string): Promise<boolean> {
+  async deleteJobPosting(id: string): Promise<boolean> {
     const result = await db
-      .delete(jobForks)
-      .where(eq(jobForks.id, id))
-      .returning({ id: jobForks.id });
+      .delete(jobPostings)
+      .where(eq(jobPostings.id, id))
+      .returning({ id: jobPostings.id });
 
     return result.length > 0;
   },

@@ -6,9 +6,9 @@ import {
 } from 'fastify-type-provider-zod';
 import { userRoutes } from './routes/users.js';
 import { resumeRoutes } from './routes/resumes.js';
-import { forkRoutes } from './routes/forks.js';
+import { jobPostingRoutes } from './routes/job-postings.js';
 import { refactorRoutes } from './routes/refactor.js';
-import { cleanupRoutes } from './routes/cleanup.js';
+import { ingestRoutes } from './routes/ingest.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -49,9 +49,9 @@ export async function buildApp() {
   // Register routes
   await app.register(userRoutes);
   await app.register(resumeRoutes);
-  await app.register(forkRoutes);
+  await app.register(jobPostingRoutes);
   await app.register(refactorRoutes);
-  await app.register(cleanupRoutes);
+  await app.register(ingestRoutes);
 
   return app;
 }

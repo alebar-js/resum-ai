@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import { refactorApi, type RefactorRequest } from "~/lib/api";
+import { refactorApi, type RefactorDataRequest } from "~/lib/api";
 
-export function useRefactor() {
+export function useRefactorData() {
   return useMutation({
-    mutationFn: (data: RefactorRequest) => refactorApi.refactor(data),
+    mutationFn: (data: RefactorDataRequest) => refactorApi.refactorData(data),
   });
 }

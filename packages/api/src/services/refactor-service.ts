@@ -1,31 +1,8 @@
-import { RefactorRequest, RefactorResponse } from '@app/shared';
+import { GoogleGenAI } from '@google/genai';
+import { RefactorDataRequest, RefactorDataResponse, ResumeProfile } from '@app/shared';
 import { resumeService } from './resume-service';
 
-const SYSTEM_PROMPT = `You are a Senior Career Refactor Agent. Your task is to modify a Markdown-formatted Base Resume to align with a provided Job Description.
-
-## Transformation Rules
-1. **Term Alignment:** Identify high-priority keywords in the JD and update the resume terminology to match exactly (e.g., "Software Engineer" -> "Fullstack Engineer" if the JD requires it).
-2. **Bullet Prioritization:** Reorder bullet points to put the most relevant experience for the specific JD at the top of each section.
-3. **Strict Integrity:** Never fabricate dates, titles, or skills. Only rephrase and emphasize existing data.
-4. **Markdown Format:** Output only valid Markdown. Do not include conversational text or explanations.
-
-Respond ONLY with the refactored resume in Markdown format. No explanations, no preamble.`;
-
-const GEMINI_MODEL = 'gemini-2.0-flash';
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
-    };
-  }>;
-  error?: {
-    message: string;
-  };
-}
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 function getApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -36,18 +13,47 @@ function getApiKey(): string {
 }
 
 export const refactorService = {
-  async refactorResume(request: RefactorRequest): Promise<RefactorResponse> {
-    const masterResume = await resumeService.getMasterResume();
+  async refactorResumeData(request: RefactorDataRequest): Promise<RefactorDataResponse> {
+    const masterResume = await resumeService.getMasterResumeData();
 
-    if (!masterResume || !masterResume.content) {
+    if (!masterResume || !masterResume.data) {
       throw new Error('No master resume found. Please create one first.');
     }
 
+    // Extract basics to preserve them (don't send to LLM)
+    const originalBasics = masterResume.data.basics;
+    
+    // Create a resume without basics for LLM processing
+    const resumeWithoutBasics = {
+      ...masterResume.data,
+      
+    };
+
+    const SYSTEM_PROMPT = `You are a Resume Refactoring Engine.
+
+**Input:**
+1. \`BaseResume\` (JSON object following ResumeProfile schema, but basics fields like name, email, phone, url, and location are excluded)
+2. \`JobDescription\` (Text)
+
+**Task:**
+Return a \`TargetResume\` JSON object that aligns the base resume with the job description.
+
+**Rules:**
+1. \`basics.label\`: Update to match the JD title if relevant.
+2. \`work[].highlights\`: Rewrite bullet points to use keywords from the JD. Reorder to prioritize JD-relevant accomplishments.
+3. \`skills\`: Reorder keywords to prioritize JD requirements.
+4. Do NOT remove jobs unless explicitly told.
+5. Do NOT fabricate dates, titles, or skills.
+6. Maintain the exact same structure and all required fields.
+
+**Output:**
+Return ONLY a valid JSON object matching the ResumeProfile schema. No explanations, no markdown code blocks, no preamble.`;
+
     const userPrompt = `${SYSTEM_PROMPT}
 
-## Base Resume (Markdown)
-\`\`\`markdown
-${masterResume.content}
+## Base Resume (JSON)
+\`\`\`json
+${JSON.stringify(resumeWithoutBasics, null, 2)}
 \`\`\`
 
 ## Job Description
@@ -55,44 +61,49 @@ ${masterResume.content}
 ${request.jobDescription}
 \`\`\`
 
-Refactor the resume above to align with this job description. Output ONLY the refactored Markdown.`;
+Return the refactored resume as a JSON object following the exact same ResumeProfile schema.`;
 
     const apiKey = getApiKey();
-    const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    const ai = new GoogleGenAI({ apiKey });
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: userPrompt,
+      config: {
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: userPrompt }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 4096,
-        },
-      }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    const rawContent = response.text || '';
+    
+    // Try to parse JSON, handling potential code blocks
+    let refactoredData: ResumeProfile;
+    try {
+      refactoredData = JSON.parse(rawContent) as ResumeProfile;
+    } catch (error) {
+      // If parsing fails, try to extract JSON from the response
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        refactoredData = JSON.parse(jsonMatch[0]) as ResumeProfile;
+      } else {
+        throw new Error('Failed to parse AI response as JSON. Response: ' + rawContent.substring(0, 200));
+      }
     }
 
-    const data = await response.json() as GeminiResponse;
-
-    if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message}`);
-    }
-
-    const refactoredContent = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    // Merge back the original basics (preserve name, email, phone, url, location)
+    // Only allow label to change
+    const mergedRefactored: ResumeProfile = {
+      ...refactoredData,
+      basics: {
+        ...originalBasics,
+        label: refactoredData.basics.label, // Allow label to be updated
+      },
+    };
 
     return {
-      original: masterResume.content,
-      refactored: refactoredContent,
+      original: masterResume.data,
+      refactored: mergedRefactored,
     };
   },
 };

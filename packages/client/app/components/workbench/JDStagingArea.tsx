@@ -4,22 +4,22 @@ import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { useAppStore } from "~/lib/store";
-import { useRefactor } from "~/lib/queries";
+import { useRefactorData } from "~/lib/queries";
 
 export function JDStagingArea() {
   const [isOpen, setIsOpen] = useState(true);
   const jobDescription = useAppStore((state) => state.jobDescription);
   const setJobDescription = useAppStore((state) => state.setJobDescription);
-  const startDiffReview = useAppStore((state) => state.startDiffReview);
+  const startDiffReviewData = useAppStore((state) => state.startDiffReviewData);
   
-  const refactorMutation = useRefactor();
+  const refactorMutation = useRefactorData();
 
   const handleAdapt = async () => {
     if (!jobDescription.trim()) return;
 
     try {
       const result = await refactorMutation.mutateAsync({ jobDescription });
-      startDiffReview(result.original, result.refactored);
+      startDiffReviewData(result.original, result.refactored);
       setIsOpen(false);
     } catch (error) {
       console.error("Adapt failed:", error);

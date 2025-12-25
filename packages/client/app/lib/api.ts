@@ -53,96 +53,111 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 }
 
 // Resume API
-export interface Resume {
-  id: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export const resumeApi = {
-  getMaster: () => fetchApi<Resume | null>("/resumes/master"),
-  updateMaster: (content: string) =>
-    fetchApi<Resume>("/resumes/master", {
+  getMasterData: () => fetchApi<ResumeData | null>("/resumes/master/data"),
+  updateMasterData: (data: UpdateResumeData) =>
+    fetchApi<ResumeData>("/resumes/master/data", {
       method: "PUT",
-      json: { content },
+      json: data,
     }),
 };
 
-// Forks API
-export type ForkStatus = "DRAFT" | "MERGED" | "EXPORTED";
+// Job Postings API
+import type {   
+  JobPostingStatus,
+  ResumeData,
+  UpdateResumeData,
+  JobPostingData,
+  CreateJobPostingData,
+  UpdateJobPostingData,
+  RefactorDataRequest,
+  RefactorDataResponse,
+  ResumeProfile,
+  IngestTextRequest,
+  IngestResponse
+} from "@app/shared";
 
-export interface JobFork {
-  id: string;
+export type { 
+  JobPostingStatus,
+  ResumeData,
+  UpdateResumeData,
+  JobPostingData,
+  CreateJobPostingData,
+  UpdateJobPostingData,
+  RefactorDataRequest,
+  RefactorDataResponse,
+  ResumeProfile,
+  IngestTextRequest,
+  IngestResponse,
+};
+
+export interface CreateJobPostingInput {
   title: string;
   jobDescription: string;
   content: string;
-  status: ForkStatus;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface CreateForkInput {
-  title: string;
-  jobDescription: string;
-  content: string;
-}
-
-export interface UpdateForkInput {
+export interface UpdateJobPostingInput {
   title?: string;
   content?: string;
-  status?: ForkStatus;
+  status?: JobPostingStatus;
 }
 
-export const forksApi = {
-  list: () => fetchApi<JobFork[]>("/forks"),
-  get: (id: string) => fetchApi<JobFork>(`/forks/${id}`),
-  create: (data: CreateForkInput) =>
-    fetchApi<JobFork>("/forks", {
+export const jobPostingsApi = {
+  list: () => fetchApi<JobPostingData[]>("/job-postings"),
+  get: (id: string) => fetchApi<JobPostingData>(`/job-postings/${id}`),
+  create: (data: CreateJobPostingData) =>
+    fetchApi<JobPostingData>("/job-postings", {
       method: "POST",
       json: data,
     }),
-  update: (id: string, data: UpdateForkInput) =>
-    fetchApi<JobFork>(`/forks/${id}`, {
+  update: (id: string, data: UpdateJobPostingData) =>
+    fetchApi<JobPostingData>(`/job-postings/${id}`, {
       method: "PATCH",
       json: data,
     }),
   delete: (id: string) =>
-    fetchApi<null>(`/forks/${id}`, {
+    fetchApi<null>(`/job-postings/${id}`, {
       method: "DELETE",
     }),
 };
 
 // Refactor API
-export interface RefactorRequest {
-  jobDescription: string;
-}
-
-export interface RefactorResponse {
-  original: string;
-  refactored: string;
-}
-
 export const refactorApi = {
-  refactor: (data: RefactorRequest) =>
-    fetchApi<RefactorResponse>("/refactor", {
+  refactorData: (data: RefactorDataRequest) =>
+    fetchApi<RefactorDataResponse>("/refactor/data", {
       method: "POST",
       json: data,
     }),
 };
 
-// Cleanup API
-export interface CleanupRequest {
-  text: string;
-}
 
-export interface CleanupResponse {
-  cleaned: string;
-}
+// Ingest API
+export const ingestApi = {
+  ingestFile: async (file: File): Promise<IngestResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-export const cleanupApi = {
-  cleanup: (data: CleanupRequest) =>
-    fetchApi<CleanupResponse>("/cleanup", {
+    const response = await fetch(`${API_BASE_URL}/ingest/file`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch {
+        data = await response.text();
+      }
+      throw new ApiError(response.status, response.statusText, data);
+    }
+
+    return response.json() as Promise<IngestResponse>;
+  },
+
+  ingestText: (data: IngestTextRequest) =>
+    fetchApi<IngestResponse>("/ingest/text", {
       method: "POST",
       json: data,
     }),

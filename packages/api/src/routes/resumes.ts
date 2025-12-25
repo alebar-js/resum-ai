@@ -1,32 +1,32 @@
 import { FastifyInstance } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { ResumeSchema, UpdateResumeSchema } from '@app/shared';
+import { ResumeDataSchema, UpdateResumeDataSchema } from '@app/shared';
 import { resumeService } from '../services/resume-service.js';
 
 export async function resumeRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
   // Get the master resume
-  app.get('/resumes/master', {
+  app.get('/resumes/master/data', {
     schema: {
       response: {
-        200: ResumeSchema.nullable(),
+        200: ResumeDataSchema.nullable(),
       },
     },
   }, async () => {
-    return await resumeService.getMasterResume();
+    return await resumeService.getMasterResumeData();
   });
 
   // Create or update the master resume
-  app.put('/resumes/master', {
+  app.put('/resumes/master/data', {
     schema: {
-      body: UpdateResumeSchema,
+      body: UpdateResumeDataSchema,
       response: {
-        200: ResumeSchema,
+        200: ResumeDataSchema,
       },
     },
   }, async (request) => {
-    return await resumeService.upsertMasterResume(request.body);
+    return await resumeService.upsertMasterResumeData(request.body);
   });
 }
 

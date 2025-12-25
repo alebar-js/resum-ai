@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
 import { Explorer } from "~/components/explorer/Explorer";
 import { Workbench } from "~/components/workbench/Workbench";
-import { Preview } from "~/components/preview/Preview";
+import { useAppStore } from "~/lib/store";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,6 +11,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  // Temporary redirect logic: Home acts like main-resume
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Explorer Sidebar */}
@@ -18,15 +19,10 @@ export default function Home() {
         <Explorer />
       </aside>
 
-      {/* Workbench Center */}
+      {/* Main Content Area - Workbench Only */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Workbench />
       </main>
-
-      {/* Preview Pane */}
-      <aside className="w-96 flex-shrink-0 bg-card border-l border-border flex flex-col overflow-hidden">
-        <Preview />
-      </aside>
     </div>
   );
 }

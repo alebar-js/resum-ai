@@ -1,61 +1,149 @@
 import { z } from 'zod';
 
-// Job Fork status enum as const map (following backend.md - avoid enums)
-export const FORK_STATUS = {
-  DRAFT: 'DRAFT',
-  MERGED: 'MERGED',
+// Job Posting status enum as const map (following backend.md - avoid enums)
+export const JOB_POSTING_STATUS = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  READY: 'READY',
   EXPORTED: 'EXPORTED',
+  APPLIED: 'APPLIED',
+  OFFER: 'OFFER',
+  REJECTED: 'REJECTED',
 } as const;
 
-export const ForkStatusSchema = z.enum(['DRAFT', 'MERGED', 'EXPORTED']);
-export type ForkStatus = z.infer<typeof ForkStatusSchema>;
+export const JobPostingStatusSchema = z.enum(['IN_PROGRESS', 'READY', 'EXPORTED', 'APPLIED', 'OFFER', 'REJECTED']);
+export type JobPostingStatus = z.infer<typeof JobPostingStatusSchema>;
+
+// ============================================================================
+// NEW MODULAR RESUME SCHEMA (Structured JSON)
+// ============================================================================
+
+export const LocationSchema = z.object({
+  city: z.string(),
+  region: z.string(),
+}).optional();
+
+export type Location = z.infer<typeof LocationSchema>;
+
+export const BasicsSchema = z.object({
+  name: z.string().default(""),
+  label: z.string().default(""), // e.g. "Senior Fullstack Engineer"
+  email: z.string().email().or(z.literal("")).default(""), // Allow empty string for drafts
+  phone: z.string().default(""),
+  url: z.string().url().optional().or(z.literal("")), // Allow empty string
+  location: LocationSchema,
+});
+
+export type Basics = z.infer<typeof BasicsSchema>;
+
+export const JobSchema = z.object({
+  id: z.string().uuid(), // Unique ID for diffing
+  company: z.string().default(""),
+  position: z.string().default(""),
+  startDate: z.string().default(""), // ISO or "YYYY-MM"
+  endDate: z.string().optional(), // "Present" if null
+  highlights: z.array(z.string()).default([]), // The bullet points (Crucial for AI Refactoring)
+});
+
+export type Job = z.infer<typeof JobSchema>;
+
+export const EducationSchema = z.object({
+  institution: z.string().default(""),
+  area: z.string().default(""),
+  studyType: z.string().default(""),
+  startDate: z.string().default(""),
+  endDate: z.string().optional(),
+});
+
+export type Education = z.infer<typeof EducationSchema>;
+
+export const ProjectSchema = z.object({
+  name: z.string().default(""),
+  description: z.string().default(""),
+  highlights: z.array(z.string()).default([]),
+  url: z.string().url().optional().or(z.literal("")), // Allow empty string
+}).optional();
+
+export type Project = z.infer<typeof ProjectSchema>;
+
+export const SkillSchema = z.object({
+  name: z.string().default(""), // e.g. "Frontend"
+  keywords: z.array(z.string()).default([]), // e.g. ["React", "TypeScript", "Tailwind"]
+});
+
+export type Skill = z.infer<typeof SkillSchema>;
+
+export const ResumeProfileSchema = z.object({
+  id: z.string().uuid(),
+  basics: BasicsSchema,
+  work: z.array(JobSchema),
+  education: z.array(EducationSchema),
+  skills: z.array(SkillSchema),
+  projects: z.array(ProjectSchema).optional(),
+});
+
+export type ResumeProfile = z.infer<typeof ResumeProfileSchema>;
+
+// ============================================================================
+// RESUME DATA SCHEMAS
+// ============================================================================
 
 // Master Resume Schema
-export const ResumeSchema = z.object({
+export const ResumeDataSchema = z.object({
   id: z.string().uuid(),
-  content: z.string(), // Markdown content
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  data: ResumeProfileSchema, // The structured JSON object
+  createdAt: z.union([z.string(), z.date()]),
+  updatedAt: z.union([z.string(), z.date()]),
 });
 
-export type Resume = z.infer<typeof ResumeSchema>;
+export type ResumeData = z.infer<typeof ResumeDataSchema>;
 
-export const UpdateResumeSchema = z.object({
-  content: z.string().min(1, 'Resume content cannot be empty'),
+export const UpdateResumeDataSchema = z.object({
+  data: ResumeProfileSchema,
 });
 
-export type UpdateResume = z.infer<typeof UpdateResumeSchema>;
+export type UpdateResumeData = z.infer<typeof UpdateResumeDataSchema>;
 
-// Job Fork Schema
-export const JobForkSchema = z.object({
+// ============================================================================
+// JOB POSTING SCHEMAS
+// ============================================================================
+
+export const JobPostingDataSchema = z.object({
   id: z.string().uuid(),
-  title: z.string().min(1), // e.g., "Meta - Sr. Engineer"
-  jobDescription: z.string(), // The original JD
-  content: z.string(), // The tailored resume Markdown
-  status: ForkStatusSchema,
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  title: z.string().min(1),
+  jobDescription: z.string(),
+  postingUrl: z.string().url().nullable().optional(), // The job posting URL (nullable/optional)
+  data: ResumeProfileSchema.nullable(), // The tailored resume JSON (nullable if not yet created)
+  status: JobPostingStatusSchema,
+  createdAt: z.union([z.string(), z.date()]),
+  updatedAt: z.union([z.string(), z.date()]),
 });
 
-export type JobFork = z.infer<typeof JobForkSchema>;
+export type JobPostingData = z.infer<typeof JobPostingDataSchema>;
 
-export const CreateJobForkSchema = z.object({
+export const CreateJobPostingDataSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   jobDescription: z.string().min(1, 'Job description is required'),
-  content: z.string().min(1, 'Content is required'),
+  postingUrl: z.string().url().optional().or(z.literal('')), // Optional URL field
+  data: ResumeProfileSchema,
 });
 
-export type CreateJobFork = z.infer<typeof CreateJobForkSchema>;
+export type CreateJobPostingData = z.infer<typeof CreateJobPostingDataSchema>;
 
-export const UpdateJobForkSchema = z.object({
+export const UpdateJobPostingDataSchema = z.object({
   title: z.string().min(1).optional(),
-  content: z.string().min(1).optional(),
-  status: ForkStatusSchema.optional(),
+  jobDescription: z.string().optional(),
+  postingUrl: z.string().url().optional().or(z.literal('')), // Optional URL field (empty string to clear)
+  data: ResumeProfileSchema.optional(),
+  status: JobPostingStatusSchema.optional(),
 });
 
-export type UpdateJobFork = z.infer<typeof UpdateJobForkSchema>;
+export type UpdateJobPostingData = z.infer<typeof UpdateJobPostingDataSchema>;
 
-// Refactor Request/Response Schemas
+// ============================================================================
+// REFACTOR SCHEMAS
+// ============================================================================
+
+// Refactor Request/Response Schemas (Legacy - Markdown)
 export const RefactorRequestSchema = z.object({
   jobDescription: z.string().min(1, 'Job description is required'),
 });
@@ -69,16 +157,36 @@ export const RefactorResponseSchema = z.object({
 
 export type RefactorResponse = z.infer<typeof RefactorResponseSchema>;
 
-// Cleanup Request/Response Schemas
-export const CleanupRequestSchema = z.object({
+// Refactor Request/Response Schemas (New - JSON)
+export const RefactorDataRequestSchema = z.object({
+  jobDescription: z.string().min(1, 'Job description is required'),
+});
+
+export type RefactorDataRequest = z.infer<typeof RefactorDataRequestSchema>;
+
+export const RefactorDataResponseSchema = z.object({
+  original: ResumeProfileSchema,
+  refactored: ResumeProfileSchema,
+});
+
+export type RefactorDataResponse = z.infer<typeof RefactorDataResponseSchema>;
+
+// ============================================================================
+// INGEST (RESUME PARSING) SCHEMAS
+// ============================================================================
+
+// Ingest text request (for raw text input)
+export const IngestTextRequestSchema = z.object({
   text: z.string().min(1, 'Resume text is required'),
 });
 
-export type CleanupRequest = z.infer<typeof CleanupRequestSchema>;
+export type IngestTextRequest = z.infer<typeof IngestTextRequestSchema>;
 
-export const CleanupResponseSchema = z.object({
-  cleaned: z.string(),
+// Ingest response (returned after parsing)
+export const IngestResponseSchema = z.object({
+  markdown: z.string(),
+  profile: ResumeProfileSchema,
 });
 
-export type CleanupResponse = z.infer<typeof CleanupResponseSchema>;
+export type IngestResponse = z.infer<typeof IngestResponseSchema>;
 
