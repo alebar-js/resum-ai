@@ -28,6 +28,8 @@
   },
   "dependencies": {
     "@fastify/multipart": "^9.3.0",
+    "@react-pdf/renderer": "^4.3.1",
+    "docx": "^9.5.1",
     "llama-cloud-services": "^0.5.1"
   }
 }

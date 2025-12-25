@@ -5,6 +5,7 @@ import { MasterResumeItem } from "./MasterResumeItem";
 import { JobPostingsList } from "./ForksList";
 import { CreateJobPostingDialog } from "./CreateJobPostingDialog";
 import { Button } from "~/components/ui/button";
+import { ThemeSwitcher } from "~/components/ui/theme-switcher";
 
 export function Explorer() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -53,6 +54,11 @@ export function Explorer() {
             </Button>
           </div>
           <JobPostingsList onCreateClick={() => setIsCreateDialogOpen(true)} />
+        </div>
+
+        {/* Theme Switcher */}
+        <div className="p-3 border-t border-border flex justify-center">
+          <ThemeSwitcher />
         </div>
       </div>
 

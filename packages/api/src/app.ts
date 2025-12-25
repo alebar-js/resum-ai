@@ -9,6 +9,7 @@ import { resumeRoutes } from './routes/resumes.js';
 import { jobPostingRoutes } from './routes/job-postings.js';
 import { refactorRoutes } from './routes/refactor.js';
 import { ingestRoutes } from './routes/ingest.js';
+import { skillGapRoutes } from './routes/skill-gap.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -52,6 +53,7 @@ export async function buildApp() {
   await app.register(jobPostingRoutes);
   await app.register(refactorRoutes);
   await app.register(ingestRoutes);
+  await app.register(skillGapRoutes);
 
   return app;
 }

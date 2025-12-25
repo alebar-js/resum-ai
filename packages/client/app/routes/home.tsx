@@ -1,9 +1,7 @@
-import type { Route } from "./+types/home";
 import { Explorer } from "~/components/explorer/Explorer";
 import { Workbench } from "~/components/workbench/Workbench";
-import { useAppStore } from "~/lib/store";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "ResumAI - Resume Adapt IDE" },
     { name: "description", content: "AI-powered resume tailoring with diff-based review" },

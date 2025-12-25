@@ -1,3 +1,4 @@
 packages:
-  - 'packages/*'
+  - packages/*
 
+storeDir: /Users/alebar/Library/pnpm/store/v10

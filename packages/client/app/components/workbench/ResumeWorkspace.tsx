@@ -7,7 +7,7 @@ import { useMasterResumeData, useUpdateMasterResumeData } from "~/lib/queries";
 import { useJobPostingData, useUpdateJobPostingData } from "~/lib/queries";
 import type { ResumeProfile } from "@app/shared";
 import { Button } from "~/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, ArrowLeft } from "lucide-react";
 import { useCallback, useState } from "react";
 
 // Default empty resume structure
@@ -39,6 +39,7 @@ export function ResumeWorkspace() {
   const activeJobPostingId = useAppStore((state) => state.activeJobPostingId);
   const diffData = useAppStore((state) => state.diffData);
   const updateResolvedData = useAppStore((state) => state.updateResolvedData);
+  const setJobPostingView = useAppStore((state) => state.setJobPostingView);
   
   const { data: masterResumeData, isLoading: masterLoading } = useMasterResumeData();
   const { data: jobPostingData, isLoading: jobPostingLoading } = useJobPostingData(activeJobPostingId);
@@ -86,6 +87,13 @@ export function ResumeWorkspace() {
   // Show upload option when editing master resume (not in review mode)
   const showUploadOption = viewMode === "master" && !diffData.isReviewing;
   
+  // Show back button when in job posting mode (not in review mode, and resume data exists)
+  const showBackButton = viewMode === "jobPosting" && !diffData.isReviewing && !!jobPostingData?.data;
+  
+  const handleBackToActions = useCallback(() => {
+    setJobPostingView("actions");
+  }, [setJobPostingView]);
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -115,6 +123,21 @@ export function ResumeWorkspace() {
   return (
     <>
       <div className="h-full flex flex-col bg-background overflow-hidden">
+        {/* Back Button - shown when in job posting mode with resume data */}
+        {showBackButton && (
+          <div className="flex-shrink-0 p-3 border-b border-border bg-card/50">
+            <Button
+              onClick={handleBackToActions}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Actions
+            </Button>
+          </div>
+        )}
+        
         {/* Upload Option Banner - shown when editing master resume */}
         {showUploadOption && (
           <div className="flex-shrink-0 p-3 border-b border-border bg-card/50 flex items-center justify-between gap-3">

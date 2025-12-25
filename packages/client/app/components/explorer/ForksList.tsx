@@ -6,7 +6,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { cn } from "~/lib/utils";
 import { useAppStore } from "~/lib/store";
 import { useJobPostings } from "~/lib/queries";
-import type { JobPosting, JobPostingStatus } from "~/lib/api";
+import type { JobPostingData, JobPostingStatus } from "~/lib/api";
 
 interface JobPostingsListProps {
   onCreateClick?: () => void;
@@ -109,7 +109,7 @@ export function JobPostingsList({ onCreateClick }: JobPostingsListProps) {
   return (
     <ScrollArea className="flex-1">
       <div className="space-y-1">
-        {filteredJobPostings.map((jobPosting: JobPosting) => (
+        {filteredJobPostings.map((jobPosting: JobPostingData) => (
           <button
             key={jobPosting.id}
             onClick={() => navigate(`/job-posting/${jobPosting.id}`)}

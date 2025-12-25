@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ResumeProfile } from "@app/shared";
+import type { ResumeProfile, SkillGapAnalysisResponse } from "@app/shared";
 
 type ViewMode = "master" | "jobPosting";
 
@@ -18,6 +18,8 @@ interface DiffDataState {
   acceptedChanges: Record<string, boolean>; // Map of change paths to acceptance status (true = accepted, false = rejected, undefined = pending)
 }
 
+type Theme = "light" | "dark" | "system";
+
 interface AppState {
   // Sidebar
   isSidebarOpen: boolean;
@@ -26,6 +28,9 @@ interface AppState {
   // View mode
   viewMode: ViewMode;
   activeJobPostingId: string | null;
+  
+  // Theme
+  theme: Theme;
   
   // Diff state (legacy - Markdown)
   diff: DiffState;
@@ -36,6 +41,12 @@ interface AppState {
   // JD Input
   jobDescription: string;
   
+  // Job Posting Workspace View
+  jobPostingView: "actions" | "resume" | "skillGaps" | "export" | "applied" | null;
+  
+  // Skill Gap Analysis Data
+  skillGapData: SkillGapAnalysisResponse | null;
+  
   // Actions
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -43,6 +54,9 @@ interface AppState {
   setViewMode: (mode: ViewMode) => void;
   setActiveJobPostingId: (id: string | null) => void;
   setJobDescription: (jd: string) => void;
+  setJobPostingView: (view: "actions" | "resume" | "skillGaps" | "export" | "applied" | null) => void;
+  setSkillGapData: (data: AppState["skillGapData"]) => void;
+  setTheme: (theme: Theme) => void;
   
   // Diff actions (legacy - Markdown)
   startDiffReview: (original: string, refactored: string) => void;
@@ -62,13 +76,30 @@ interface AppState {
   resetChangeDecision: (changePath: string) => void;
 }
 
+// Initialize theme from localStorage or default to "system"
+const getInitialTheme = (): Theme => {
+  if (typeof window === "undefined") return "system";
+  try {
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
+    }
+  } catch (error) {
+    console.error("Error reading theme from localStorage:", error);
+  }
+  return "system";
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
   isSidebarOpen: true,
   searchQuery: "",
   viewMode: "master",
   activeJobPostingId: null,
+  theme: getInitialTheme(),
   jobDescription: "",
+  jobPostingView: null,
+  skillGapData: null,
   diff: {
     original: "",
     refactored: "",
@@ -94,6 +125,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   // JD actions
   setJobDescription: (jd) => set({ jobDescription: jd }),
+  
+  // Job posting view actions
+  setJobPostingView: (view) => set({ jobPostingView: view }),
+  setSkillGapData: (data) => set({ skillGapData: data }),
+  
+  // Theme actions
+  setTheme: (theme) => {
+    set({ theme });
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (error) {
+      console.error("Error saving theme to localStorage:", error);
+    }
+  },
   
   // Diff actions
   startDiffReview: (original, refactored) => set({

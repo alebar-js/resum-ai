@@ -72,6 +72,8 @@ import type {
   UpdateJobPostingData,
   RefactorDataRequest,
   RefactorDataResponse,
+  SkillGapAnalysisRequest,
+  SkillGapAnalysisResponse,
   ResumeProfile,
   IngestTextRequest,
   IngestResponse
@@ -86,6 +88,8 @@ export type {
   UpdateJobPostingData,
   RefactorDataRequest,
   RefactorDataResponse,
+  SkillGapAnalysisRequest,
+  SkillGapAnalysisResponse,
   ResumeProfile,
   IngestTextRequest,
   IngestResponse,
@@ -126,6 +130,15 @@ export const jobPostingsApi = {
 export const refactorApi = {
   refactorData: (data: RefactorDataRequest) =>
     fetchApi<RefactorDataResponse>("/refactor/data", {
+      method: "POST",
+      json: data,
+    }),
+};
+
+// Skill Gap Analysis API
+export const skillGapApi = {
+  analyze: (data: SkillGapAnalysisRequest) =>
+    fetchApi<SkillGapAnalysisResponse>("/skill-gap/analyze", {
       method: "POST",
       json: data,
     }),

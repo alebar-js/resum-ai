@@ -40,7 +40,8 @@
 }
 
 /* Dark theme by default - IDE aesthetic */
-:root {
+:root,
+[data-theme="dark"] {
   /* Deep Purple (#6246ea) and Dark Charcoal palette */
   --background: oklch(0.13 0.01 285);
   --foreground: oklch(0.93 0.01 285);
@@ -74,6 +75,41 @@
   --diff-remove-foreground: oklch(0.72 0.02 25);
 }
 
+/* Light theme */
+[data-theme="light"] {
+  /* Light theme with Deep Purple accent */
+  --background: oklch(0.98 0.01 285);
+  --foreground: oklch(0.15 0.01 285);
+  --card: oklch(0.99 0.01 285);
+  --card-foreground: oklch(0.15 0.01 285);
+  --popover: oklch(0.99 0.01 285);
+  --popover-foreground: oklch(0.15 0.01 285);
+  --primary: oklch(0.55 0.22 285);
+  --primary-foreground: oklch(0.98 0.01 285);
+  --secondary: oklch(0.95 0.01 285);
+  --secondary-foreground: oklch(0.15 0.01 285);
+  --muted: oklch(0.95 0.01 285);
+  --muted-foreground: oklch(0.45 0.01 285);
+  --accent: oklch(0.92 0.05 285);
+  --accent-foreground: oklch(0.15 0.01 285);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 285);
+  --border: oklch(0.88 0.01 285);
+  --input: oklch(0.95 0.01 285);
+  --ring: oklch(0.55 0.22 285);
+  --radius: 0.5rem;
+
+  /* Sidebar - slightly lighter */
+  --sidebar: oklch(0.96 0.01 285);
+  --sidebar-foreground: oklch(0.25 0.01 285);
+
+  /* Diff colors - light mode */
+  --diff-add: oklch(0.85 0.08 145 / 0.3);
+  --diff-add-foreground: oklch(0.25 0.05 145);
+  --diff-remove: oklch(0.85 0.08 25 / 0.3);
+  --diff-remove-foreground: oklch(0.35 0.05 25);
+}
+
 @layer base {
   *,
   ::after,
@@ -100,6 +136,14 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: oklch(0.45 0.05 285);
+  }
+
+  /* Light mode scrollbar */
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: oklch(0.65 0.02 285);
+  }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.55 0.03 285);
   }
 }
 

@@ -172,6 +172,48 @@ export const RefactorDataResponseSchema = z.object({
 export type RefactorDataResponse = z.infer<typeof RefactorDataResponseSchema>;
 
 // ============================================================================
+// SKILL GAP ANALYSIS SCHEMAS
+// ============================================================================
+
+export const SkillGapCategorySchema = z.enum(['hard_skills', 'domain_knowledge', 'seniority']);
+export type SkillGapCategory = z.infer<typeof SkillGapCategorySchema>;
+
+export const SkillGapStatusSchema = z.enum(['matched', 'missing', 'partial']);
+export type SkillGapStatus = z.infer<typeof SkillGapStatusSchema>;
+
+export const SkillGapItemSchema = z.object({
+  skill: z.string(), // The skill/keyword from JD
+  category: SkillGapCategorySchema,
+  status: SkillGapStatusSchema,
+  evidence: z.string().nullish(), // Evidence from resume (if partial/matched) - can be string, null, or undefined
+  recommendation: z.string().nullish(), // Recommendation for improvement - can be string, null, or undefined
+});
+
+export type SkillGapItem = z.infer<typeof SkillGapItemSchema>;
+
+export const SkillGapAnalysisRequestSchema = z.object({
+  jobDescription: z.string().min(1, 'Job description is required'),
+  resume: ResumeProfileSchema,
+});
+
+export type SkillGapAnalysisRequest = z.infer<typeof SkillGapAnalysisRequestSchema>;
+
+export const SkillGapAnalysisResponseSchema = z.object({
+  matched: z.array(SkillGapItemSchema),
+  missing: z.array(SkillGapItemSchema),
+  partial: z.array(SkillGapItemSchema),
+  summary: z.object({
+    totalSkills: z.number(),
+    matchedCount: z.number(),
+    missingCount: z.number(),
+    partialCount: z.number(),
+    matchPercentage: z.number(), // 0-100
+  }),
+});
+
+export type SkillGapAnalysisResponse = z.infer<typeof SkillGapAnalysisResponseSchema>;
+
+// ============================================================================
 // INGEST (RESUME PARSING) SCHEMAS
 // ============================================================================
 
