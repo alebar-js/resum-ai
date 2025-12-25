@@ -1,99 +1,97 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ResumeProfile } from "@app/shared";
+import { formatDateRange, formatGraduationDate } from "./date-formatters";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 36,
+    padding: 28,
     fontFamily: "Times-Roman",
-    fontSize: 11,
-    lineHeight: 1.5,
+    fontSize: 10,
+    lineHeight: 1.35,
     color: "#111",
   },
   header: {
     borderBottom: "2 solid #6246ea",
-    paddingBottom: 8,
-    marginBottom: 16,
+    paddingBottom: 6,
+    marginBottom: 10,
   },
   name: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 700,
     marginBottom: 4,
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
   label: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#444",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    justifyContent: "center",
+    gap: 6,
     color: "#555",
-    fontSize: 10,
+    fontSize: 9,
   },
   section: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
-    letterSpacing: 1,
+    letterSpacing: 0.6,
     textTransform: "uppercase",
     color: "#6246ea",
     borderBottom: "1 solid #ddd",
-    paddingBottom: 4,
-    marginBottom: 8,
+    paddingBottom: 2,
+    marginBottom: 6,
   },
   jobHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   jobTitle: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     fontWeight: 700,
   },
   jobCompany: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     color: "#444",
   },
   dateText: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#555",
   },
   bulletRow: {
     flexDirection: "row",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   bullet: {
-    width: 8,
-    fontSize: 12,
-    lineHeight: 1.5,
+    width: 6,
+    fontSize: 10,
+    lineHeight: 1.35,
   },
   bulletText: {
     flex: 1,
-    fontSize: 10.5,
+    fontSize: 9.5,
     color: "#222",
   },
   skillGroup: {
-    marginBottom: 6,
+    marginBottom: 4,
   },
   skillName: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: 700,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   textSmall: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#444",
   },
 });
 
-const formatDate = (value?: string | null) => {
-  if (!value) return "Present";
-  return value;
-};
 
 interface MinimalistPdfProps {
   resume: ResumeProfile;
@@ -128,17 +126,20 @@ export function MinimalistPdf({ resume }: MinimalistPdfProps) {
         {education?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Education</Text>
-            {education.map((edu, idx) => (
-              <View key={`${edu.institution}-${idx}`} style={{ marginBottom: 6 }}>
-                <Text style={styles.jobTitle}>{edu.institution}</Text>
-                <Text style={styles.textSmall}>
-                  {edu.studyType} in {edu.area}
-                </Text>
-                <Text style={styles.textSmall}>
-                  {formatDate(edu.startDate)} – {formatDate(edu.endDate)}
-                </Text>
-              </View>
-            ))}
+            {education.map((edu, idx) => {
+              const degreeText = `${edu.studyType}${edu.area ? ` in ${edu.area}` : ""}`;
+              const graduationDate = formatGraduationDate(edu.endDate);
+              
+              return (
+                <View key={`${edu.institution}-${idx}`} style={{ marginBottom: 6 }}>
+                  <Text style={styles.jobTitle}>{edu.institution}</Text>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 1 }}>
+                    <Text style={styles.textSmall}>{degreeText}</Text>
+                    {graduationDate ? <Text style={styles.textSmall}>{graduationDate}</Text> : null}
+                  </View>
+                </View>
+              );
+            })}
           </View>
         ) : null}
 
@@ -154,7 +155,7 @@ export function MinimalistPdf({ resume }: MinimalistPdfProps) {
                     <Text style={styles.jobCompany}>{job.company}</Text>
                   </View>
                   <Text style={styles.dateText}>
-                    {formatDate(job.startDate)} – {formatDate(job.endDate)}
+                    {formatDateRange(job.startDate, job.endDate)}
                   </Text>
                 </View>
                 {job.highlights?.map((highlight, idx) => (

@@ -4,8 +4,11 @@ import {
   Packer,
   Paragraph,
   TextRun,
+  TabStopType,
 } from "docx";
 import type { ResumeProfile } from "@app/shared";
+import { formatDateRange, formatGraduationDate } from "./date-formatters";
+
 
 /**
  * Generate a simple DOCX resume using a minimalist layout.
@@ -67,7 +70,7 @@ export async function generateDocx(resume: ResumeProfile): Promise<Blob> {
 
       children.push(
         new Paragraph({
-          text: `${job.startDate || ""} – ${job.endDate || "Present"}`,
+          text: formatDateRange(job.startDate, job.endDate),
         })
       );
 
@@ -108,18 +111,39 @@ export async function generateDocx(resume: ResumeProfile): Promise<Blob> {
     );
 
     education.forEach((edu) => {
+      // Institution on its own line
       children.push(
         new Paragraph({
-          text: `${edu.institution} — ${edu.studyType} in ${edu.area}`,
+          text: edu.institution,
           heading: HeadingLevel.HEADING_3,
         })
       );
 
-      children.push(
-        new Paragraph({
-          text: `${edu.startDate || ""} – ${edu.endDate || "Present"}`,
-        })
-      );
+      // Degree and graduation date on same line with space-between
+      const degreeText = `${edu.studyType}${edu.area ? ` in ${edu.area}` : ""}`;
+      const graduationDate = formatGraduationDate(edu.endDate);
+      
+      if (graduationDate) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun(degreeText + "\t" + graduationDate),
+            ],
+            tabStops: [
+              {
+                type: TabStopType.RIGHT,
+                position: 6000, // Position in twips (1/20th of a point)
+              },
+            ],
+          })
+        );
+      } else {
+        children.push(
+          new Paragraph({
+            text: degreeText,
+          })
+        );
+      }
     });
   }
 

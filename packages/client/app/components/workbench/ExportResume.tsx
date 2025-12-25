@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { ArrowLeft, FileText, Loader2, Download } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { MinimalistPdf } from "~/components/export/MinimalistPdf";
+import { MinimalistPdf } from "~/lib/export/MinimalistPdf";
 import { generateDocx } from "~/lib/export/docx";
 import { useAppStore } from "~/lib/store";
 import { useJobPostingData, useMasterResumeData } from "~/lib/queries";
