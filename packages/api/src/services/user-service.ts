@@ -9,7 +9,7 @@ export const userService = {
       .values({
         email: data.email,
         name: data.name,
-      })
+      } as any)
       .returning();
 
     return {
