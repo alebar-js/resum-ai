@@ -137,15 +137,14 @@ export const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
     let userRow = existingByGoogle;
 
     if (userRow) {
-      const updateValues: Partial<typeof users.$inferInsert> = {
-        email, // keep in sync
-        name: name ?? userRow.name,
-        picture: picture ?? userRow.picture,
-        updatedAt: now,
-      };
       const [updated] = await db
         .update(users)
-        .set(updateValues as any)
+        .set({
+          email, // keep in sync
+          name: name ?? userRow.name,
+          picture: picture ?? userRow.picture,
+          updatedAt: now,
+        } as any)
         .where(eq(users.id, userRow.id))
         .returning();
       userRow = updated;
@@ -153,30 +152,28 @@ export const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
       // 2) Otherwise, try to link by email.
       const [existingByEmail] = await db.select().from(users).where(eq(users.email, email)).limit(1);
       if (existingByEmail) {
-        const updateValues: Partial<typeof users.$inferInsert> = {
-          googleId,
-          name: name ?? existingByEmail.name,
-          picture: picture ?? existingByEmail.picture,
-          updatedAt: now,
-        };
         const [updated] = await db
           .update(users)
-          .set(updateValues as any)
+          .set({
+            googleId,
+            name: name ?? existingByEmail.name,
+            picture: picture ?? existingByEmail.picture,
+            updatedAt: now,
+          } as any)
           .where(eq(users.id, existingByEmail.id))
           .returning();
         userRow = updated;
       } else {
-        const insertValues: typeof users.$inferInsert = {
-          email,
-          name,
-          picture,
-          googleId,
-          createdAt: now,
-          updatedAt: now,
-        };
         const [created] = await db
           .insert(users)
-          .values(insertValues as any)
+          .values({
+            email,
+            name,
+            picture,
+            googleId,
+            createdAt: now,
+            updatedAt: now,
+          } as any)
           .returning();
         userRow = created;
       }
