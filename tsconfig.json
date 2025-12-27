@@ -13,6 +13,7 @@
       "@app/shared": ["packages/shared/src/index.ts"]
     }
   },
-  "exclude": ["node_modules"]
+  "include": [],
+  "exclude": ["node_modules", "packages"]
 }
 
