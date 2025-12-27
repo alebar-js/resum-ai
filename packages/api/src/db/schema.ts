@@ -71,3 +71,4 @@ export const jobPostingsRelations = relations(jobPostings, ({ one, many }) => ({
   }),
   resumes: many(resumes),
 }));
+# Fri Dec 26 21:43:42 EST 2025
