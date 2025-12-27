@@ -14,7 +14,13 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/login": {
+    params: {};
+  };
   "/main-resume": {
+    params: {};
+  };
+  "/job-postings": {
     params: {};
   };
   "/job-posting/:id": {
@@ -27,7 +33,11 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/main-resume" | "/job-posting/:id";
+    page: "/" | "/login" | "/main-resume" | "/job-postings" | "/job-posting/:id";
+  };
+  "routes/login.tsx": {
+    id: "routes/login";
+    page: "/login";
   };
   "routes/main-resume.tsx": {
     id: "routes/main-resume";
@@ -37,6 +47,10 @@ type RouteFiles = {
     id: "routes/main-resume.redirect";
     page: "/main-resume";
   };
+  "routes/job-postings.tsx": {
+    id: "routes/job-postings";
+    page: "/job-postings";
+  };
   "routes/job-posting.$id.tsx": {
     id: "routes/job-posting.$id";
     page: "/job-posting/:id";
@@ -45,7 +59,9 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
+  "routes/login": typeof import("./app/routes/login.tsx");
   "routes/main-resume": typeof import("./app/routes/main-resume.tsx");
   "routes/main-resume.redirect": typeof import("./app/routes/main-resume.redirect.tsx");
+  "routes/job-postings": typeof import("./app/routes/job-postings.tsx");
   "routes/job-posting.$id": typeof import("./app/routes/job-posting.$id.tsx");
 };

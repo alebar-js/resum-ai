@@ -109,9 +109,10 @@ export type UpdateResumeData = z.infer<typeof UpdateResumeDataSchema>;
 
 export const JobPostingDataSchema = z.object({
   id: z.string().uuid(),
-  title: z.string().min(1),
+  title: z.string(), // Allow empty string for folder markers
   jobDescription: z.string(),
   postingUrl: z.string().url().nullable().optional(), // The job posting URL (nullable/optional)
+  path: z.string().nullable().optional(), // Virtualized folder path (e.g., "/folder1/subfolder"), null for root
   data: ResumeProfileSchema.nullable(), // The tailored resume JSON (nullable if not yet created)
   status: JobPostingStatusSchema,
   createdAt: z.union([z.string(), z.date()]),
@@ -121,18 +122,22 @@ export const JobPostingDataSchema = z.object({
 export type JobPostingData = z.infer<typeof JobPostingDataSchema>;
 
 export const CreateJobPostingDataSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  title: z.string(), // Allow empty string for folder markers
   jobDescription: z.string().min(1, 'Job description is required'),
   postingUrl: z.string().url().optional().or(z.literal('')), // Optional URL field
-  data: ResumeProfileSchema,
+  path: z.string().optional(), // Optional folder path (e.g., "/folder1/subfolder")
+  // Optional: when provided, creates/updates the personalized resume for this posting.
+  // New postings should typically omit this so "Adapt Your Resume" is available.
+  data: ResumeProfileSchema.optional(),
 });
 
 export type CreateJobPostingData = z.infer<typeof CreateJobPostingDataSchema>;
 
 export const UpdateJobPostingDataSchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().optional(), // Allow empty string for folder markers
   jobDescription: z.string().optional(),
   postingUrl: z.string().url().optional().or(z.literal('')), // Optional URL field (empty string to clear)
+  path: z.string().nullable().optional(), // Optional folder path (null for root, empty string to clear)
   data: ResumeProfileSchema.optional(),
   status: JobPostingStatusSchema.optional(),
 });

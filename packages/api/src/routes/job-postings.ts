@@ -11,6 +11,9 @@ const ParamsSchema = z.object({
 export async function jobPostingRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
+  // Protect all job posting routes
+  app.addHook('onRequest', fastify.authenticate);
+
   // List all job postings
   app.get('/job-postings', {
     schema: {
@@ -18,8 +21,8 @@ export async function jobPostingRoutes(fastify: FastifyInstance) {
         200: z.array(JobPostingDataSchema),
       },
     },
-  }, async () => {
-    return await jobPostingService.getJobPostingsData();
+  }, async (request) => {
+    return await jobPostingService.getJobPostingsData(request.user.id);
   });
 
   // Get a specific job posting by ID
@@ -32,7 +35,7 @@ export async function jobPostingRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const jobPosting = await jobPostingService.getJobPostingDataById(request.params.id);
+    const jobPosting = await jobPostingService.getJobPostingDataById(request.params.id, request.user.id);
     if (!jobPosting) {
       return reply.status(404).send({ error: 'Job posting not found' });
     }
@@ -48,7 +51,7 @@ export async function jobPostingRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const jobPosting = await jobPostingService.createJobPostingData(request.body);
+    const jobPosting = await jobPostingService.createJobPostingData(request.body, request.user.id);
     return reply.status(201).send(jobPosting);
   });
 
@@ -63,7 +66,7 @@ export async function jobPostingRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const jobPosting = await jobPostingService.updateJobPostingData(request.params.id, request.body);
+    const jobPosting = await jobPostingService.updateJobPostingData(request.params.id, request.body, request.user.id);
     if (!jobPosting) {
       return reply.status(404).send({ error: 'Job posting not found' });
     }
@@ -80,11 +83,33 @@ export async function jobPostingRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request, reply) => {
-    const deleted = await jobPostingService.deleteJobPosting(request.params.id);
+    const deleted = await jobPostingService.deleteJobPosting(request.params.id, request.user.id);
     if (!deleted) {
       return reply.status(404).send({ error: 'Job posting not found' });
     }
     return reply.status(204).send();
+  });
+
+  // Delete all job postings in a folder (and subfolders)
+  // Use :name* to match the full folder path including slashes
+  app.delete('/job-postings/folder/:name*', {
+    schema: {
+      params: z.object({
+        name: z.string(),
+      }),
+      response: {
+        200: z.object({
+          deletedCount: z.number(),
+        }),
+      },
+    },
+  }, async (request) => {
+    // Reconstruct the full folder path (Fastify's :name* captures everything after /folder/)
+    // Ensure it starts with / and doesn't have double slashes
+    const name = request.params.name || '';
+    const folderPath = name.startsWith('/') ? name : `/${name}`;
+    const deletedCount = await jobPostingService.deleteJobPostingsByFolderPath(folderPath, request.user.id);
+    return { deletedCount };
   });
 }
 

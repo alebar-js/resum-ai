@@ -2,12 +2,18 @@ import { pgTable, uuid, varchar, timestamp, text, pgEnum, jsonb, boolean } from 
 import { relations } from 'drizzle-orm';
 import type { ResumeProfile } from '@app/shared';
 
-// Users table (existing)
+// Users table (updated for OAuth2.0 support)
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }), // Optional
+  picture: varchar('picture', { length: 500 }), // From Google/GitHub profile
+  // OAuth Provider IDs
+  googleId: varchar('google_id', { length: 255 }).unique(),
+  githubId: varchar('github_id', { length: 255 }).unique(),
+  linkedinId: varchar('linkedin_id', { length: 255 }).unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type DbUser = typeof users.$inferSelect;
@@ -37,6 +43,7 @@ export const jobPostings = pgTable('job_postings', {
   title: varchar('title', { length: 255 }).notNull(), // e.g., "Meta - Sr. Engineer"
   jobDescription: text('job_description').notNull(), // The raw input text
   postingUrl: text('posting_url'),
+  path: text('path'), // Virtualized folder path (e.g., "/folder1/subfolder"), null for root
   status: jobPostingStatusEnum('status').notNull().default('IN_PROGRESS'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

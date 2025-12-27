@@ -71,13 +71,9 @@ export function CreateJobPostingDialog({
         title: data.title,
         jobDescription: data.jobDescription,
         postingUrl: data.postingUrl && data.postingUrl.trim() !== "" ? data.postingUrl : undefined,
-        data: masterResume.data, // Start with main resume JSON data
       });
 
-      // Navigate to the new job posting view
       navigate(`/job-posting/${newJobPosting.id}`);
-
-      // Reset form and close dialog
       reset();
       onOpenChange(false);
     } catch (err) {

@@ -73,6 +73,18 @@ export function useDeleteJobPosting() {
   });
 }
 
+export function useDeleteJobPostingFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => jobPostingsApi.deleteFolder(name),
+    onSuccess: (_, name) => {
+      queryClient.invalidateQueries({ queryKey: jobPostingKeys.lists() });
+      queryClient.removeQueries({ queryKey: jobPostingKeys.list({ path: name }) });
+    },
+  });
+}
+
 // Alias hooks for backward compatibility (using same implementation)
 export const useJobPostingsData = useJobPostings;
 export const useJobPostingData = useJobPosting;

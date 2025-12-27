@@ -1,2 +1,2 @@
-ALTER TABLE "job_postings" ADD COLUMN "posting_url" text;--> statement-breakpoint
+ALTER TABLE "job_postings" ADD COLUMN IF NOT EXISTS "posting_url" text;--> statement-breakpoint
 

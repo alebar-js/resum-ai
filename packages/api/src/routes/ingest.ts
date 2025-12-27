@@ -28,6 +28,9 @@ export async function ingestRoutes(fastify: FastifyInstance) {
 
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
+  // Protect all ingest routes
+  app.addHook('onRequest', fastify.authenticate);
+
   // ============================================================================
   // POST /ingest/file - Parse a resume file (PDF or DOCX)
   // ============================================================================

@@ -10,6 +10,7 @@ import { jobPostingRoutes } from './routes/job-postings.js';
 import { refactorRoutes } from './routes/refactor.js';
 import { ingestRoutes } from './routes/ingest.js';
 import { skillGapRoutes } from './routes/skill-gap.js';
+import { authPlugin } from './plugins/auth.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -19,6 +20,7 @@ export async function buildApp() {
   // CORS configuration
   await app.register(cors, {
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
 
@@ -46,6 +48,9 @@ export async function buildApp() {
   app.addHook('onClose', async () => {
     app.log.info('Server shutting down...');
   });
+
+  // Auth (OAuth2 + JWT cookie)
+  await app.register(authPlugin);
 
   // Register routes
   await app.register(userRoutes);

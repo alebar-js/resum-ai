@@ -6,6 +6,9 @@ import { resumeService } from '../services/resume-service.js';
 export async function resumeRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
 
+  // Protect all resume routes
+  app.addHook('onRequest', fastify.authenticate);
+
   // Get the master resume
   app.get('/resumes/master/data', {
     schema: {
@@ -13,8 +16,8 @@ export async function resumeRoutes(fastify: FastifyInstance) {
         200: ResumeDataSchema.nullable(),
       },
     },
-  }, async () => {
-    return await resumeService.getMasterResumeData();
+  }, async (request) => {
+    return await resumeService.getMasterResumeData(request.user.id);
   });
 
   // Create or update the master resume
@@ -26,7 +29,7 @@ export async function resumeRoutes(fastify: FastifyInstance) {
       },
     },
   }, async (request) => {
-    return await resumeService.upsertMasterResumeData(request.body);
+    return await resumeService.upsertMasterResumeData(request.body, request.user.id);
   });
 }
 

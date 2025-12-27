@@ -78,11 +78,11 @@ export const resumeService = {
     };
   },
 
-  async getResumeByJobPostingId(jobPostingId: string): Promise<ResumeData | null> {
+  async getResumeByJobPostingId(jobPostingId: string, userId: string): Promise<ResumeData | null> {
     const [resume] = await db
       .select()
       .from(resumes)
-      .where(eq(resumes.targetJobId, jobPostingId))
+      .where(and(eq(resumes.targetJobId, jobPostingId), eq(resumes.userId, userId)))
       .limit(1);
 
     if (!resume || !resume.data) return null;
@@ -97,11 +97,13 @@ export const resumeService = {
 
   async createResumeForJobPosting(
     jobPostingId: string,
-    data: ResumeProfile
+    data: ResumeProfile,
+    userId: string
   ): Promise<ResumeData> {
     const [created] = await db
       .insert(resumes)
       .values({
+        userId,
         isMaster: false,
         targetJobId: jobPostingId,
         data: data,
@@ -118,12 +120,13 @@ export const resumeService = {
 
   async updateResumeForJobPosting(
     jobPostingId: string,
-    data: ResumeProfile
+    data: ResumeProfile,
+    userId: string
   ): Promise<ResumeData | null> {
-    const existing = await this.getResumeByJobPostingId(jobPostingId);
+    const existing = await this.getResumeByJobPostingId(jobPostingId, userId);
 
     if (!existing) {
-      return this.createResumeForJobPosting(jobPostingId, data);
+      return this.createResumeForJobPosting(jobPostingId, data, userId);
     }
 
     const [updated] = await db
@@ -141,6 +144,15 @@ export const resumeService = {
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
+  },
+
+  async deleteResumeByJobPostingId(jobPostingId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(resumes)
+      .where(and(eq(resumes.targetJobId, jobPostingId), eq(resumes.userId, userId)))
+      .returning({ id: resumes.id });
+
+    return result.length > 0;
   },
 };
 

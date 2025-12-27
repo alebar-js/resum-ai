@@ -157,8 +157,6 @@ export function JobPostingWorkspace() {
       // Auto-set view based on state only when view is not explicitly set
       if (diffData.isReviewing) {
         setJobPostingView("resume");
-      } else if (jobPostingData?.data) {
-        setJobPostingView("resume");
       } else {
         setJobPostingView("actions");
       }

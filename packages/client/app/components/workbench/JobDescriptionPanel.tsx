@@ -34,9 +34,9 @@ export function JobDescriptionPanel() {
   );
   const [isJobDescriptionDirty, setIsJobDescriptionDirty] = useState(false);
   const [isPostingUrlDirty, setIsPostingUrlDirty] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const debouncedJobDescription = useDebouncedValue(localJobDescription, 2000);
   const debouncedPostingUrl = useDebouncedValue(localPostingUrl, 2000);
-  const hasInitializedRef = useRef(false);
   const previousJobPostingIdRef = useRef<string | null>(null);
   const lastSubmittedJobDescriptionRef = useRef<string | null>(null);
   const lastSubmittedPostingUrlRef = useRef<string | null>(null);
@@ -45,27 +45,27 @@ export function JobDescriptionPanel() {
   useEffect(() => {
     // Reset initialization flag when job posting changes
     if (previousJobPostingIdRef.current !== activeJobPostingId) {
-      hasInitializedRef.current = false;
       previousJobPostingIdRef.current = activeJobPostingId;
       lastSubmittedJobDescriptionRef.current = null;
       lastSubmittedPostingUrlRef.current = null;
       setIsJobDescriptionDirty(false);
       setIsPostingUrlDirty(false);
+      setIsInitialized(false);
     }
 
-    if (jobPostingData?.jobDescription !== undefined && !hasInitializedRef.current) {
+    if (jobPostingData?.jobDescription !== undefined && !isInitialized) {
       setLocalJobDescription(jobPostingData.jobDescription);
       setLocalPostingUrl(jobPostingData.postingUrl ?? "");
-      hasInitializedRef.current = true;
+      setIsInitialized(true);
     }
-  }, [jobPostingData?.jobDescription, jobPostingData?.postingUrl, activeJobPostingId]);
+  }, [jobPostingData?.jobDescription, jobPostingData?.postingUrl, activeJobPostingId, isInitialized]);
 
   // Auto-save when debounced job description changes (only if user has made changes)
   useEffect(() => {
     if (
       !activeJobPostingId ||
       isLoading ||
-      !hasInitializedRef.current ||
+      !isInitialized ||
       !jobPostingData ||
       !isJobDescriptionDirty // only save if the user actually edited
     ) {
@@ -104,7 +104,7 @@ export function JobDescriptionPanel() {
     if (
       !activeJobPostingId ||
       isLoading ||
-      !hasInitializedRef.current ||
+      !isInitialized ||
       !jobPostingData ||
       !isPostingUrlDirty // only save if the user actually edited
     ) {
@@ -151,7 +151,7 @@ export function JobDescriptionPanel() {
     );
   }
 
-  if (isLoading || !hasInitializedRef.current) {
+  if (isLoading || !jobPostingData) {
     return (
       <div className="h-full flex flex-col bg-card border-r border-border">
         <div className="flex-shrink-0 p-4 border-b border-border">
@@ -171,16 +171,6 @@ export function JobDescriptionPanel() {
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-semibold text-foreground">Job Description</h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              {updateJobPostingMutation.isPending ? (
-                <span className="flex items-center gap-1">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                "Changes save automatically"
-              )}
-            </p>
           </div>
         </div>
       </div>

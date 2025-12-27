@@ -29,6 +29,20 @@
       "when": 1766622203592,
       "tag": "0003_add_posting_url",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766700000000,
+      "tag": "0004_add_path",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1766776841577,
+      "tag": "0005_mushy_leader",
+      "breakpoints": true
     }
   ]
 }

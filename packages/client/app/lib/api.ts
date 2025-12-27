@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 interface FetchOptions extends RequestInit {
   json?: unknown;
@@ -18,17 +18,25 @@ class ApiError extends Error {
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { json, headers: customHeaders, ...rest } = options;
 
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...customHeaders,
-  };
+  const headers: Record<string, string> = {};
+
+  // Merge custom headers if provided
+  if (customHeaders) {
+    Object.assign(headers, customHeaders);
+  }
+
+  // Only set Content-Type for requests with a JSON body
+  if (json !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const config: RequestInit = {
     ...rest,
-    headers,
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
+    credentials: "include",
   };
 
-  if (json) {
+  if (json !== undefined) {
     config.body = JSON.stringify(json);
   }
 
@@ -124,6 +132,10 @@ export const jobPostingsApi = {
     fetchApi<null>(`/job-postings/${id}`, {
       method: "DELETE",
     }),
+  deleteFolder: (name: string) =>
+    fetchApi<{ deletedCount: number }>(`/job-postings/folder/${name}`, {
+      method: "DELETE",
+    }),
 };
 
 // Refactor API
@@ -154,6 +166,7 @@ export const ingestApi = {
     const response = await fetch(`${API_BASE_URL}/ingest/file`, {
       method: "POST",
       body: formData,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -174,6 +187,17 @@ export const ingestApi = {
       method: "POST",
       json: data,
     }),
+};
+
+// Auth API
+export type SessionUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+};
+
+export const authApi = {
+  me: () => fetchApi<SessionUser>("/api/me"),
 };
 
 export { ApiError };

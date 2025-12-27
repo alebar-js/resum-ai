@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, FolderKanban, Plus } from "lucide-react";
+import { FileText, FolderKanban, Plus, FolderPlus } from "lucide-react";
 import { SearchBar } from "./SearchBar";
 import { MasterResumeItem } from "./MasterResumeItem";
 import { JobPostingsList } from "./ForksList";
@@ -9,6 +9,7 @@ import { ThemeSwitcher } from "~/components/ui/theme-switcher";
 
 export function Explorer() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createFolderTrigger, setCreateFolderTrigger] = useState(0);
 
   return (
     <>
@@ -43,17 +44,31 @@ export function Explorer() {
               <FolderKanban className="w-3 h-3" />
               Job Postings
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => setIsCreateDialogOpen(true)}
-              title="Add new job posting"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setCreateFolderTrigger((prev) => prev + 1)}
+                title="Create new folder"
+              >
+                <FolderPlus className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setIsCreateDialogOpen(true)}
+                title="Add new job posting"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <JobPostingsList onCreateClick={() => setIsCreateDialogOpen(true)} />
+          <JobPostingsList 
+            onCreateClick={() => setIsCreateDialogOpen(true)}
+            createFolderTrigger={createFolderTrigger}
+          />
         </div>
 
         {/* Theme Switcher */}
