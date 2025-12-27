@@ -21,12 +21,11 @@ export const refactorService = {
     }
 
     // Extract basics to preserve them (don't send to LLM)
-    const originalBasics = masterResume.data.basics;
-    
+    const { basics: originalBasics, ...rest } = masterResume.data;
+
     // Create a resume without basics for LLM processing
     const resumeWithoutBasics = {
-      ...masterResume.data,
-      
+      ...rest,
     };
 
     const SYSTEM_PROMPT = `You are a Resume Refactoring Engine.
