@@ -45,3 +45,4 @@ coverage/
 *.db
 *.db-journal
 
+.vercel

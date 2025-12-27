@@ -111,8 +111,9 @@ export const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
         id: requiredEnv('GOOGLE_CLIENT_ID'),
         secret: requiredEnv('GOOGLE_CLIENT_SECRET'),
       },
-      auth: oauthPlugin.GOOGLE_CONFIGURATION,
     },
+    // Use OIDC discovery to avoid relying on provider-specific static configuration exports.
+    discovery: { issuer: 'https://accounts.google.com' },
     startRedirectPath: '/auth/login/google',
     callbackUri: process.env.GOOGLE_CALLBACK_URL ?? 'http://localhost:3000/auth/callback/google',
   });
