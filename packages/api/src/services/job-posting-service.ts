@@ -105,7 +105,7 @@ export const jobPostingService = {
         postingUrl: data.postingUrl && data.postingUrl.trim() !== '' ? data.postingUrl : null,
         path: data.path && data.path.trim() !== '' ? data.path : null,
         status: 'IN_PROGRESS',
-      })
+      } as any)
       .returning();
 
     // Create linked resume only when a personalized resume is provided.

@@ -48,7 +48,7 @@ export const resumeService = {
         .set({
           data: data.data,
           updatedAt: new Date(),
-        })
+        } as any)
         .where(eq(resumes.id, existingRow.id))
         .returning();
 
@@ -67,7 +67,7 @@ export const resumeService = {
         userId,
         isMaster: true,
         data: data.data,
-      })
+      } as any)
       .returning();
 
     return {
@@ -107,7 +107,7 @@ export const resumeService = {
         isMaster: false,
         targetJobId: jobPostingId,
         data: data,
-      })
+      } as any)
       .returning();
 
     return {
@@ -134,7 +134,7 @@ export const resumeService = {
       .set({
         data: data,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(resumes.id, existing.id))
       .returning();
 
