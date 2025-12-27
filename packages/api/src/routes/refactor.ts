@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { RefactorDataRequestSchema, RefactorDataResponseSchema, ErrorResponseSchema } from '@app/shared';
-import { refactorService } from '../services/refactor-service';
+import { refactorService } from '../services/refactor-service.js';
 
 export async function refactorRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();

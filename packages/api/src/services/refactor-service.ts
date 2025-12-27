@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { RefactorDataRequest, RefactorDataResponse, ResumeProfile } from '@app/shared';
-import { resumeService } from './resume-service';
+import { resumeService } from './resume-service.js';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
